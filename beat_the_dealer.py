@@ -11,9 +11,33 @@ SAM_TARGET = 17
 BLACKJACK = 21
 PLAYER_NAME = "sam"
 DEALER_NAME = "dealer"
-MIN_DECK_SIZE = 20
+MIN_DECK_SIZE = 15 #for simplicity, should be 52
+VALID_SUITS = {"H", "D", "C", "S"}
 
 class BeatTheDealer:
+
+    def evaluate_deck(self, deck: List[str]) -> None:
+        if len(deck) < MIN_DECK_SIZE:
+            raise ValueError(f"Deck must contain at least {MIN_DECK_SIZE} cards, it now contains {len(deck)}")
+
+        seen_cards = set()
+
+        for card in deck:
+            if card in seen_cards:
+                raise ValueError(f"Duplicate card found in deck: {card}")
+            seen_cards.add(card)
+
+            if len(card) < 2 or len(card) > 3:
+                raise ValueError(f"Invalid card format: {card}")
+
+            suit, value = card[0], card[1:]
+
+            if suit not in VALID_SUITS:
+                raise ValueError(f"Invalid suit '{suit}' in card: {card}")
+
+            if value not in card_values:
+                raise ValueError(f"Invalid value '{value}' in card: {card}")
+
 
     def calculate_score(self, hand: List[str]) -> int:
         return sum(card_values[card[1:]] for card in hand)
@@ -35,6 +59,12 @@ class BeatTheDealer:
         return hand
 
 
+    def display_results(self, winner: str, player_hand: List[str], dealer_hand: List[str]) -> None:
+        print(winner)
+        print(f"{PLAYER_NAME}: {', '.join(player_hand)}")
+        print(f"dealer: {', '.join(dealer_hand)}")
+
+
     def main(self, deck_file: Optional[str] = None) -> None:
         try:
             if not deck_file:
@@ -43,41 +73,35 @@ class BeatTheDealer:
             with open(deck_file) as f:
                 deck = f.read().split(', ')
 
-            if len(deck) < MIN_DECK_SIZE:
-                raise ValueError(f"Deck must contain at least {MIN_DECK_SIZE} cards")
+            self.evaluate_deck(deck)
 
-            sam_hand, dealer_hand = self.deal_cards(deck)
-            sam_score = self.calculate_score(sam_hand)
-            #dealer_score = self.calculate_score(dealer_hand)
+            player_hand, dealer_hand = self.deal_cards(deck)
+            player_score = self.calculate_score(player_hand)
 
-            if sam_score == BLACKJACK:
+            if player_score == BLACKJACK:
                 winner = PLAYER_NAME
-            elif sam_score > BLACKJACK: #case when dealer gets a higher initial hand than 17 ignore
+            elif player_score > BLACKJACK:
                 winner = DEALER_NAME
 
             else:
-                sam_hand = self.play_turn(SAM_TARGET, sam_hand, deck)
-                sam_score = self.calculate_score(sam_hand)
+                player_hand = self.play_turn(SAM_TARGET, player_hand, deck)
+                player_score = self.calculate_score(player_hand)
 
-                if sam_score > BLACKJACK:
+                if player_score > BLACKJACK:
                     winner = DEALER_NAME
 
                 else:
-                    dealer_hand = self.play_turn(sam_score, dealer_hand, deck)
+                    dealer_hand = self.play_turn(player_score, dealer_hand, deck)
                     dealer_score = self.calculate_score(dealer_hand)
 
                     if dealer_score > BLACKJACK:
                         winner = PLAYER_NAME
-                    elif dealer_score > sam_score:
+                    elif dealer_score > player_score:
                         winner = DEALER_NAME
                     else:
                         winner = PLAYER_NAME
 
-
-            print(winner)
-            print(f"sam: {', '.join(sam_hand)}")
-            print(f"dealer: {', '.join(dealer_hand)}")
-
+            self.display_results(winner, player_hand, dealer_hand)
 
         except ValueError as e:
             print(f"Error: {e}")
