@@ -1,6 +1,8 @@
 
 from typing import List, Optional
 import sys
+import random
+
 
 card_values = {
     "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7,
@@ -15,6 +17,12 @@ MIN_DECK_SIZE = 15 #for simplicity, should be 52
 VALID_SUITS = {"H", "D", "C", "S"}
 
 class BeatTheDealer:
+
+    def generate_shuffled_deck(self) -> List[str]:
+        deck = [suit + value for suit in VALID_SUITS for value in card_values.keys()]
+        random.shuffle(deck)
+        return deck
+
 
     def evaluate_deck(self, deck: List[str]) -> None:
         if len(deck) < MIN_DECK_SIZE:
@@ -67,13 +75,14 @@ class BeatTheDealer:
 
     def main(self, deck_file: Optional[str] = None) -> None:
         try:
-            if not deck_file:
-                raise ValueError("No deck file provided. Usage: python beat_the_dealer.py <deck_file>")
+            if deck_file:
+                with open(deck_file) as f:
+                    deck = f.read().split(', ')
+                self.evaluate_deck(deck)
 
-            with open(deck_file) as f:
-                deck = f.read().split(', ')
-
-            self.evaluate_deck(deck)
+            else:
+                deck = self.generate_shuffled_deck()
+                print("No deck file provided. Using a newly shuffled deck.")
 
             player_hand, dealer_hand = self.deal_cards(deck)
             player_score = self.calculate_score(player_hand)
